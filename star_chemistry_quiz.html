@@ -1,0 +1,823 @@
+<!DOCTYPE html>
+<html lang="uk">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Зіркова Вікторина — Масова частка розчиненої речовини</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;600;700;800;900&display=swap" rel="stylesheet">
+  <style>
+    body {
+      font-family: 'Montserrat', sans-serif;
+      background: radial-gradient(circle at center, #0f172a 0%, #090d16 60%, #030509 100%);
+      color: #ffffff;
+      min-height: 100vh;
+      overflow-x: hidden;
+    }
+
+    /* Studio Light Beams */
+    .spotlight {
+      position: absolute;
+      top: -20%;
+      width: 200px;
+      height: 140%;
+      background: linear-gradient(180deg, rgba(59, 130, 246, 0.15) 0%, rgba(147, 51, 234, 0.08) 50%, transparent 100%);
+      transform-origin: top center;
+      filter: blur(20px);
+      pointer-events: none;
+    }
+    .spotlight-1 { left: 10%; transform: rotate(22deg); animation: swing1 8s ease-in-out infinite alternate; }
+    .spotlight-2 { right: 10%; transform: rotate(-22deg); animation: swing2 9s ease-in-out infinite alternate; }
+
+    @keyframes swing1 {
+      0% { transform: rotate(18deg); }
+      100% { transform: rotate(30deg); }
+    }
+    @keyframes swing2 {
+      0% { transform: rotate(-18deg); }
+      100% { transform: rotate(-30deg); }
+    }
+
+    /* Custom Option Hexagon-style Buttons */
+    .btn-option {
+      background: linear-gradient(180deg, #1e293b 0%, #0f172a 100%);
+      border: 2px solid #3b82f6;
+      box-shadow: 0 0 15px rgba(59, 130, 246, 0.2), inset 0 0 10px rgba(59, 130, 246, 0.1);
+      transition: all 0.2s ease;
+    }
+
+    .btn-option:hover:not(:disabled) {
+      background: linear-gradient(180deg, #2563eb 0%, #1d4ed8 100%);
+      border-color: #60a5fa;
+      box-shadow: 0 0 25px rgba(96, 165, 250, 0.5);
+      transform: translateY(-2px);
+    }
+
+    .btn-option.selected {
+      background: linear-gradient(180deg, #d97706 0%, #b45309 100%) !important;
+      border-color: #fbbf24 !important;
+      box-shadow: 0 0 30px rgba(251, 191, 36, 0.8) !important;
+      color: #fff !important;
+      animation: pulse-select 0.8s infinite alternate;
+    }
+
+    .btn-option.correct {
+      background: linear-gradient(180deg, #059669 0%, #047857 100%) !important;
+      border-color: #34d399 !important;
+      box-shadow: 0 0 35px rgba(52, 211, 153, 0.9) !important;
+      color: #fff !important;
+    }
+
+    .btn-option.wrong {
+      background: linear-gradient(180deg, #dc2626 0%, #b91c1c 100%) !important;
+      border-color: #f87171 !important;
+      box-shadow: 0 0 30px rgba(248, 113, 113, 0.8) !important;
+    }
+
+    @keyframes pulse-select {
+      0% { opacity: 0.85; }
+      100% { opacity: 1; }
+    }
+
+    .glow-gold {
+      text-shadow: 0 0 16px rgba(245, 158, 11, 0.8);
+    }
+    .glow-cyan {
+      text-shadow: 0 0 14px rgba(6, 182, 212, 0.7);
+    }
+
+    /* Star Ladder Badge Styles */
+    .ladder-chip {
+      transition: all 0.25s ease;
+    }
+    .ladder-chip.active {
+      background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%);
+      color: #ffffff;
+      font-weight: 800;
+      border-color: #fef08a;
+      box-shadow: 0 0 15px rgba(245, 158, 11, 0.7);
+      transform: scale(1.06);
+    }
+    .ladder-chip.safe {
+      border-color: #f59e0b;
+      color: #fbbf24;
+    }
+    .ladder-chip.passed {
+      background: rgba(16, 185, 129, 0.15);
+      border-color: #10b981;
+      color: #34d399;
+    }
+
+    /* Timer Ring */
+    .timer-svg circle {
+      transition: stroke-dashoffset 1s linear, stroke 0.3s ease;
+    }
+  </style>
+</head>
+<body class="flex flex-col min-h-screen relative overflow-x-hidden selection:bg-amber-500 selection:text-black">
+  
+  <!-- Studio Spotlights -->
+  <div class="spotlight spotlight-1"></div>
+  <div class="spotlight spotlight-2"></div>
+
+  <!-- Header -->
+  <header class="w-full bg-slate-900/90 backdrop-blur border-b border-blue-900/60 py-3.5 px-4 md:px-10 flex items-center justify-between z-20 relative">
+    <div class="flex items-center gap-3">
+      <div class="w-10 h-10 rounded-2xl bg-gradient-to-tr from-amber-500 to-yellow-300 flex items-center justify-center font-black text-slate-950 text-xl shadow-lg shadow-amber-500/30">
+        ⭐
+      </div>
+      <div>
+        <h1 class="text-base md:text-xl font-black tracking-wide text-white">Зіркова Вікторина</h1>
+        <p class="text-xs text-amber-400 font-medium">Тема: Масова частка розчиненої речовини</p>
+      </div>
+    </div>
+
+    <div class="flex items-center gap-3">
+      <button id="soundToggle" onclick="toggleSound()" class="px-3.5 py-2 rounded-xl bg-slate-800 border border-slate-700 hover:border-blue-500 text-slate-300 hover:text-white transition flex items-center gap-2 text-xs md:text-sm">
+        <span id="soundIcon">🔊</span> <span class="hidden sm:inline">Звук</span>
+      </button>
+      <button id="btnWalkAway" onclick="confirmWalkAway()" class="hidden px-3.5 py-2 rounded-xl bg-red-950/60 border border-red-800 hover:bg-red-900 text-red-200 text-xs md:text-sm font-semibold transition flex items-center gap-1.5 shadow-lg">
+        🏳️ <span>Забрати зірки</span>
+      </button>
+    </div>
+  </header>
+
+  <!-- START SCREEN OVERLAY -->
+  <div id="startScreen" class="flex-1 flex flex-col items-center justify-center p-6 text-center z-20 max-w-4xl mx-auto my-auto">
+    <div class="relative mb-6">
+      <div class="w-28 h-28 md:w-36 md:h-36 rounded-full bg-gradient-to-tr from-amber-400 via-purple-600 to-blue-500 p-1 shadow-2xl shadow-blue-500/30">
+        <img src="https://placehold.co/200x200/1e1b4b/60a5fa?text=Ведуча" alt="Host Avatar" class="w-full h-full rounded-full object-cover">
+      </div>
+      <div class="absolute -bottom-2 -right-2 bg-amber-400 text-slate-950 px-3 py-1 rounded-full font-black text-xs uppercase tracking-wider shadow-lg">
+        Шоу ГРА
+      </div>
+    </div>
+
+    <h2 class="text-3xl md:text-5xl font-black text-white mb-3 glow-gold">Масова частка розчиненої речовини</h2>
+    <p class="text-amber-300 text-sm md:text-lg mb-8 max-w-xl font-medium">Перевір свої знання: 12 запитань! Збирай зірки ⭐ та досягай супер-рівня 100 ⭐!</p>
+
+    <div class="flex flex-wrap items-center justify-center gap-4 mb-8 text-xs md:text-sm text-slate-300">
+      <div class="bg-slate-900/80 border border-blue-900 px-4 py-2 rounded-xl">🎯 12 Запитань</div>
+      <div class="bg-slate-900/80 border border-amber-500/40 text-amber-300 px-4 py-2 rounded-xl">🛡️ Неспалимі рівні: 40⭐ та 80⭐</div>
+      <div class="bg-slate-900/80 border border-blue-900 px-4 py-2 rounded-xl">⏱️ 30 сек на кожне запитання</div>
+    </div>
+
+    <button onclick="startGame()" class="px-12 py-4 rounded-2xl bg-gradient-to-r from-amber-400 via-amber-500 to-yellow-400 text-slate-950 font-black text-lg md:text-xl uppercase tracking-wider shadow-2xl shadow-amber-500/40 hover:scale-105 active:scale-95 transition transform">
+      Start the challenge 🚀
+    </button>
+  </div>
+
+  <!-- MAIN GAME INTERFACE (Full Width Screen) -->
+  <main id="gameScreen" class="hidden flex-1 max-w-6xl w-full mx-auto p-4 md:p-6 flex flex-col justify-between gap-5 z-10">
+
+    <!-- Top Controls & Star Ladder Bar -->
+    <div class="bg-slate-900/90 border border-blue-900/70 rounded-2xl p-4 flex flex-col gap-3 backdrop-blur shadow-2xl relative">
+      
+      <!-- Upper Info: Timer, Level, Lifelines -->
+      <div class="flex flex-wrap items-center justify-between gap-4">
+        <!-- Timer & Level -->
+        <div class="flex items-center gap-4">
+          <div class="relative w-12 h-12 flex items-center justify-center shrink-0">
+            <svg class="timer-svg w-full h-full transform -rotate-90" viewBox="0 0 36 36">
+              <path class="text-slate-800" stroke-width="3.5" stroke="currentColor" fill="none" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" />
+              <path id="timerProgress" class="text-amber-400" stroke-dasharray="100, 100" stroke-dashoffset="0" stroke-width="3.5" stroke-linecap="round" stroke="currentColor" fill="none" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" />
+            </svg>
+            <span id="timerText" class="absolute font-black text-sm text-amber-300">30</span>
+          </div>
+
+          <div>
+            <div id="levelCategory" class="text-xs uppercase tracking-wider text-slate-400 font-bold">Рівень 1 з 12 • Хімія</div>
+            <div id="currentPrizeHeader" class="text-base md:text-xl font-black text-amber-300 glow-gold">Накопичено: 0 ⭐</div>
+          </div>
+        </div>
+
+        <!-- Lifelines Buttons -->
+        <div class="flex items-center gap-2">
+          <button id="lifeline5050" onclick="use5050()" class="px-3 py-2 rounded-xl bg-slate-800 border-2 border-amber-500/60 hover:border-amber-400 text-amber-300 font-black text-xs shadow-md transition disabled:opacity-30 disabled:border-slate-700 disabled:cursor-not-allowed">
+            50:50
+          </button>
+          <button id="lifelineClue" onclick="useClue()" class="px-3 py-2 rounded-xl bg-slate-800 border-2 border-cyan-500/60 hover:border-cyan-400 text-cyan-300 font-bold text-xs shadow-md transition disabled:opacity-30 disabled:border-slate-700 disabled:cursor-not-allowed">
+            💡 Підказка
+          </button>
+          <button id="lifelineSecondChance" onclick="useSecondChance()" class="px-3 py-2 rounded-xl bg-slate-800 border-2 border-purple-500/60 hover:border-purple-400 text-purple-300 font-bold text-xs shadow-md transition disabled:opacity-30 disabled:border-slate-700 disabled:cursor-not-allowed">
+            🛡️ Другий шанс
+          </button>
+        </div>
+      </div>
+
+      <!-- Integrated Horizontal Star Ladder Progress Bar -->
+      <div id="ladderContainer" class="flex items-center gap-1.5 overflow-x-auto pb-1 pt-2 border-t border-slate-800 scrollbar-none">
+        <!-- Dynamic Star Ladder Chips -->
+      </div>
+    </div>
+
+    <!-- Host Dialogue Box -->
+    <div class="bg-slate-900/90 border border-blue-800/60 rounded-2xl p-4 flex items-center gap-4 backdrop-blur shadow-lg">
+      <div class="w-12 h-12 md:w-14 md:h-14 rounded-full bg-gradient-to-tr from-purple-600 to-blue-500 p-0.5 shrink-0 shadow-lg">
+        <img src="https://placehold.co/100x100/1e1b4b/60a5fa?text=Ведуча" alt="Host Avatar" class="w-full h-full rounded-full object-cover">
+      </div>
+      <div class="flex-1">
+        <div class="text-xs font-extrabold text-purple-400 uppercase tracking-wide">Ведучий програми</div>
+        <p id="hostSpeech" class="text-xs md:text-sm text-slate-200 font-medium italic mt-0.5">
+          "Ласкаво просимо! Ваше запитання чекає. Обдумайте відповідь!"
+        </p>
+      </div>
+    </div>
+
+    <!-- Question Box -->
+    <div class="bg-gradient-to-b from-slate-900/95 to-blue-950/90 border-2 border-blue-600/70 rounded-3xl p-6 md:p-8 shadow-2xl backdrop-blur relative overflow-hidden flex-1 flex flex-col justify-center min-h-[170px]">
+      <div class="absolute top-0 right-0 p-4 text-slate-800 font-black text-7xl pointer-events-none opacity-20">?</div>
+      <h2 id="questionText" class="text-lg md:text-2xl font-bold text-white leading-relaxed text-center glow-cyan">
+        Завантаження запитання...
+      </h2>
+    </div>
+
+    <!-- Active Second Chance Banner -->
+    <div id="secondChanceBanner" class="hidden bg-purple-950/90 border border-purple-500 text-purple-200 px-4 py-2 rounded-xl text-center text-xs md:text-sm font-semibold animate-pulse">
+      🛡️ Захист "Другий шанс" активовано! Помилка не завершить гру.
+    </div>
+
+    <!-- Answers Grid (4 Options) -->
+    <div class="grid grid-cols-1 md:grid-cols-2 gap-3.5 mb-2">
+      <button id="opt-0" onclick="selectOption(0)" class="btn-option rounded-2xl p-4 text-left flex items-center gap-4 text-slate-100 font-medium text-sm md:text-base transition-all">
+        <span class="w-8 h-8 rounded-xl bg-amber-500/20 text-amber-300 border border-amber-500/40 font-black flex items-center justify-center text-sm shrink-0">A</span>
+        <span id="opt-text-0" class="flex-1">...</span>
+      </button>
+
+      <button id="opt-1" onclick="selectOption(1)" class="btn-option rounded-2xl p-4 text-left flex items-center gap-4 text-slate-100 font-medium text-sm md:text-base transition-all">
+        <span class="w-8 h-8 rounded-xl bg-amber-500/20 text-amber-300 border border-amber-500/40 font-black flex items-center justify-center text-sm shrink-0">B</span>
+        <span id="opt-text-1" class="flex-1">...</span>
+      </button>
+
+      <button id="opt-2" onclick="selectOption(2)" class="btn-option rounded-2xl p-4 text-left flex items-center gap-4 text-slate-100 font-medium text-sm md:text-base transition-all">
+        <span class="w-8 h-8 rounded-xl bg-amber-500/20 text-amber-300 border border-amber-500/40 font-black flex items-center justify-center text-sm shrink-0">C</span>
+        <span id="opt-text-2" class="flex-1">...</span>
+      </button>
+
+      <button id="opt-3" onclick="selectOption(3)" class="btn-option rounded-2xl p-4 text-left flex items-center gap-4 text-slate-100 font-medium text-sm md:text-base transition-all">
+        <span class="w-8 h-8 rounded-xl bg-amber-500/20 text-amber-300 border border-amber-500/40 font-black flex items-center justify-center text-sm shrink-0">D</span>
+        <span id="opt-text-3" class="flex-1">...</span>
+      </button>
+    </div>
+
+  </main>
+
+  <!-- Explanation Modal / Solution Overlay -->
+  <div id="modalExplanation" class="fixed inset-0 bg-slate-950/80 backdrop-blur-md z-50 hidden flex items-center justify-center p-4">
+    <div class="bg-slate-900 border-2 border-blue-500 rounded-3xl max-w-lg w-full p-6 shadow-2xl relative overflow-hidden animate-in fade-in zoom-in duration-200">
+      <div id="modalHeaderBg" class="h-2 w-full absolute top-0 left-0 bg-emerald-500"></div>
+      
+      <div class="flex items-center gap-3 mb-4">
+        <span id="modalIcon" class="text-3xl">🎉</span>
+        <div>
+          <h3 id="modalTitle" class="text-xl font-extrabold text-white">Правильна відповідь!</h3>
+          <p id="modalSub" class="text-xs text-slate-400">Пояснення до хімічної задачі:</p>
+        </div>
+      </div>
+
+      <div id="modalBody" class="bg-slate-950/80 border border-slate-800 rounded-2xl p-4 text-xs md:text-sm text-slate-200 leading-relaxed mb-6 font-mono">
+        <!-- Explanation populated by JS -->
+      </div>
+
+      <button id="modalActionBtn" onclick="closeExplanationModal()" class="w-full py-3.5 rounded-xl bg-gradient-to-r from-blue-600 to-indigo-600 text-white font-bold text-base shadow-lg hover:from-blue-500 hover:to-indigo-500 transition">
+        Продовжити гру ➡️
+      </button>
+    </div>
+  </div>
+
+  <!-- End Game Screen -->
+  <div id="modalEndGame" class="fixed inset-0 bg-slate-950/90 backdrop-blur-lg z-50 hidden flex items-center justify-center p-4">
+    <div class="bg-gradient-to-b from-slate-900 to-blue-950 border-2 border-amber-500/70 rounded-3xl max-w-md w-full p-8 text-center shadow-2xl relative overflow-hidden">
+      <div class="text-6xl mb-4" id="endIcon">🏆</div>
+      <h2 id="endTitle" class="text-2xl md:text-3xl font-black text-amber-300 mb-2 glow-gold">Вітаємо!</h2>
+      <p id="endSubtitle" class="text-slate-300 text-sm mb-6">Ви показали чудові знання з хімії!</p>
+
+      <div class="bg-slate-950/80 border border-amber-500/30 rounded-2xl p-5 mb-6">
+        <div class="text-xs text-slate-400 uppercase tracking-widest mb-1">Ваш остаточний здобуток:</div>
+        <div id="endPrizeAmount" class="text-3xl md:text-4xl font-black text-amber-400">100 ⭐</div>
+      </div>
+
+      <button onclick="restartGame()" class="w-full py-4 rounded-2xl bg-gradient-to-r from-amber-400 via-yellow-400 to-amber-500 text-slate-950 font-black text-lg uppercase tracking-wider shadow-xl hover:scale-105 active:scale-95 transition">
+        Зіграти ще раз 🔄
+      </button>
+    </div>
+  </div>
+
+  <!-- JavaScript Game Logic -->
+  <script>
+    /* 12 QUESTIONS DATA matching screenshots (Prizes converted to Stars ⭐) */
+    const QUESTIONS = [
+      {
+        level: 1,
+        prize: 10,
+        prizeFormatted: "10 ⭐",
+        isSafe: false,
+        category: "Теорія",
+        question: "Що таке масова частка розчиненої речовини?",
+        options: [
+          "Відношення об'єму речовини до об'єму розчину",
+          "Відношення маси розчиненої речовини до маси розчину",
+          "Відношення маси розчиненої речовини до маси води",
+          "Добуток маси речовини на масу розчину"
+        ],
+        correct: 1,
+        explanation: "<b>Масова частка розчиненої речовини (w)</b> — це відношення маси розчиненої речовини до загальної маси всього розчину.<br>Формула: <b>w = m(речовини) / m(розчину)</b>.",
+        hint: "Згадайте, що масова частка показує, яку частину всієї маси розчину займає речовина."
+      },
+      {
+        level: 2,
+        prize: 20,
+        prizeFormatted: "20 ⭐",
+        isSafe: false,
+        category: "Теорія",
+        question: "У яких одиницях найчастіше виражають масову частку?",
+        options: [
+          "У молях на літр",
+          "У частках від одиниці або відсотках",
+          "У мілілітрах",
+          "У грамах або кілограмах"
+        ],
+        correct: 1,
+        explanation: "Масова частка є безрозмірною величиною. Її виражають у <b>частках від одиниці</b> (від 0 до 1) або у <b>відсотках (%)</b>.",
+        hint: "Це відношення двох мас, тому воно виражається у відсотках (%)."
+      },
+      {
+        level: 3,
+        prize: 30,
+        prizeFormatted: "30 ⭐",
+        isSafe: false,
+        category: "Задачі",
+        question: "Обчисліть масу розчину, якщо він складається з 10 г солі та 90 г води.",
+        options: ["100 г", "80 г", "110 г", "90 г"],
+        correct: 0,
+        explanation: "Маса розчину дорівнює сумі мас розчиненої речовини та розчинника:<br><b>m(розчину) = m(солі) + m(води) = 10 г + 90 г = 100 г.</b>",
+        hint: "Маса всього розчину дорівнює масі солі плюс маса води."
+      },
+      {
+        level: 4,
+        prize: 40,
+        prizeFormatted: "40 ⭐ 🛡️",
+        isSafe: true,
+        category: "Задачі",
+        question: "Яка масова частка солі в розчині, де 20 г солі розчинено у 180 г води?",
+        options: ["10%", "5%", "11.1%", "20%"],
+        correct: 0,
+        explanation: "1) m(розчину) = 20 г + 180 г = 200 г.<br>2) w(солі) = (20 г / 200 г) × 100% = <b>10%</b>.",
+        hint: "Обчисліть спочатку загальну масу розчину (20 + 180)."
+      },
+      {
+        level: 5,
+        prize: 50,
+        prizeFormatted: "50 ⭐",
+        isSafe: false,
+        category: "Теорія",
+        question: "Як зміниться масова частка речовини, якщо до розчину додати води?",
+        options: ["Збільшиться", "Зменшиться", "Не зміниться", "Спочатку збільшиться, потім зменшиться"],
+        correct: 1,
+        explanation: "При додаванні води маса розчину зростає, а маса речовини залишається незмінною. Концентрація (частка) <b>зменшується</b>.",
+        hint: "Додавання води називається розбавленням розчину."
+      },
+      {
+        level: 6,
+        prize: 60,
+        prizeFormatted: "60 ⭐",
+        isSafe: false,
+        category: "Задачі",
+        question: "Скільки солі потрібно взяти для приготування 200 г розчину з масовою часткою 5%?",
+        options: ["100 г", "20 г", "10 г", "5 г"],
+        correct: 2,
+        explanation: "m(солі) = m(розчину) × w = 200 г × 0.05 = <b>10 г</b>.",
+        hint: "Помножте масу розчину 200 г на 0.05."
+      },
+      {
+        level: 7,
+        prize: 70,
+        prizeFormatted: "70 ⭐",
+        isSafe: false,
+        category: "Хімія",
+        question: "Як називають розчин, у якому масова частка речовини є максимально можливою за даної температури?",
+        options: ["Концентрований", "Насичений", "Пересичений", "Розбавлений"],
+        correct: 1,
+        explanation: "Розчин, у якому речовина більше не розчиняється за даної температури, називається <b>насиченим</b>.",
+        hint: "Речовина більше не може розчинитись у такому розчині."
+      },
+      {
+        level: 8,
+        prize: 80,
+        prizeFormatted: "80 ⭐ 🛡️",
+        isSafe: true,
+        category: "Задачі",
+        question: "До 150 г розчину з масовою часткою 10% додали 50 г води. Яка нова масова частка?",
+        options: ["8%", "5%", "10%", "7.5%"],
+        correct: 3,
+        explanation: "1) m(солі) = 150 × 0.10 = 15 г.<br>2) Нова маса розчину: 150 + 50 = 200 г.<br>3) w = (15 / 200) × 100% = <b>7.5%</b>.",
+        hint: "Обчисліть чисту масу солі в початковому розчині і поділіть на 200 г."
+      },
+      {
+        level: 9,
+        prize: 85,
+        prizeFormatted: "85 ⭐",
+        isSafe: false,
+        category: "Хімія",
+        question: "Фізіологічний розчин — це розчин кухонної солі з масовою часткою:",
+        options: ["9%", "0.9%", "5%", "0.1%"],
+        correct: 1,
+        explanation: "Фізіологічний розчин (0.9% NaCl) ізотонічний плазмі крові людини.",
+        hint: "Це дуже мала концентрація, менша за 1%."
+      },
+      {
+        level: 10,
+        prize: 90,
+        prizeFormatted: "90 ⭐",
+        isSafe: false,
+        category: "Задачі",
+        question: "У 300 г розчину міститься 60 г цукру. Яка масова частка цукру?",
+        options: ["25%", "10%", "15%", "20%"],
+        correct: 3,
+        explanation: "w = (60 г / 300 г) × 100% = <b>20%</b>.",
+        hint: "60 складає ровно 1/5 від 300."
+      },
+      {
+        level: 11,
+        prize: 95,
+        prizeFormatted: "95 ⭐",
+        isSafe: false,
+        category: "Формули",
+        question: "Яка формула використовується для обчислення маси розчину за густиною та об'ємом?",
+        options: ["m = V / ρ", "m = V + ρ", "m = V * ρ", "m = ρ / V"],
+        correct: 2,
+        explanation: "Маса дорівнює добутку об'єму та густини: <b>m = V * ρ</b>.",
+        hint: "Маса дорівнює об'єму, помноженому на густину."
+      },
+      {
+        level: 12,
+        prize: 100,
+        prizeFormatted: "100 ⭐ 🏆",
+        isSafe: true,
+        category: "Суперзадача",
+        question: "Яку масу цукру треба додати до 100 г розчину з часткою 10%, щоб вона стала 20%?",
+        options: ["20 г", "10 г", "15 г", "12.5 г"],
+        correct: 3,
+        explanation: "1) Початковий цукор: 10 г.<br>2) Рівняння: (10 + x) / (100 + x) = 0.20<br>3) 10 + x = 20 + 0.2x => 0.8x = 10 => <b>x = 12.5 г</b>.",
+        hint: "Складіть рівняння, враховуючи, що доданий цукор збільшує і речовину, і розчин."
+      }
+    ];
+
+    /* GAME STATE */
+    let currentLevelIndex = 0;
+    let selectedOptionIndex = null;
+    let timerInterval = null;
+    let timeLeft = 30;
+    let isSecondChanceActive = false;
+    let secondChanceUsedThisTurn = false;
+    let soundEnabled = true;
+
+    let lifelines = {
+      fiftyFifty: true,
+      clue: true,
+      secondChance: true
+    };
+
+    /* WEB AUDIO SYNTHESIZER */
+    const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+
+    function playTone(freq, type = 'sine', duration = 0.2, gainValue = 0.1) {
+      if (!soundEnabled) return;
+      try {
+        if (audioCtx.state === 'suspended') audioCtx.resume();
+        const osc = audioCtx.createOscillator();
+        const gain = audioCtx.createGain();
+        osc.type = type;
+        osc.frequency.setValueAtTime(freq, audioCtx.currentTime);
+        gain.gain.setValueAtTime(gainValue, audioCtx.currentTime);
+        gain.gain.exponentialRampToValueAtTime(0.00001, audioCtx.currentTime + duration);
+        osc.connect(gain);
+        gain.connect(audioCtx.destination);
+        osc.start();
+        osc.stop(audioCtx.currentTime + duration);
+      } catch (e) {}
+    }
+
+    function playSound(name) {
+      if (!soundEnabled) return;
+      if (name === 'select') playTone(523.25, 'sine', 0.15, 0.1);
+      else if (name === 'correct') {
+        playTone(587.33, 'triangle', 0.15, 0.15);
+        setTimeout(() => playTone(880, 'triangle', 0.4, 0.2), 150);
+      } else if (name === 'wrong') {
+        playTone(220, 'sawtooth', 0.3, 0.2);
+        setTimeout(() => playTone(174.61, 'sawtooth', 0.4, 0.2), 200);
+      } else if (name === 'lifeline') {
+        playTone(659.25, 'sine', 0.2, 0.1);
+        setTimeout(() => playTone(783.99, 'sine', 0.3, 0.1), 100);
+      } else if (name === 'win') {
+        [523.25, 659.25, 783.99, 1046.50].forEach((f, i) => {
+          setTimeout(() => playTone(f, 'triangle', 0.3, 0.15), i * 120);
+        });
+      }
+    }
+
+    function toggleSound() {
+      soundEnabled = !soundEnabled;
+      document.getElementById('soundIcon').innerText = soundEnabled ? '🔊' : '🔇';
+    }
+
+    /* GAME INIT */
+    function startGame() {
+      document.getElementById('startScreen').classList.add('hidden');
+      document.getElementById('gameScreen').classList.remove('hidden');
+      document.getElementById('btnWalkAway').classList.remove('hidden');
+      renderLadder();
+      loadQuestion(0);
+    }
+
+    function renderLadder() {
+      const container = document.getElementById('ladderContainer');
+      container.innerHTML = '';
+      
+      QUESTIONS.forEach((q, idx) => {
+        const item = document.createElement('div');
+        item.id = `ladder-chip-${idx}`;
+        item.className = `ladder-chip shrink-0 px-3 py-1 rounded-xl text-xs font-bold border border-slate-700 bg-slate-800/80 ${q.isSafe ? 'safe' : 'text-slate-300'}`;
+        item.innerHTML = `${q.level}. ${q.prizeFormatted}`;
+        container.appendChild(item);
+      });
+    }
+
+    function updateLadderUI() {
+      QUESTIONS.forEach((q, idx) => {
+        const el = document.getElementById(`ladder-chip-${idx}`);
+        if (!el) return;
+        el.classList.remove('active', 'passed');
+        if (idx === currentLevelIndex) {
+          el.classList.add('active');
+          el.scrollIntoView({ behavior: 'smooth', block: 'nearest', inline: 'center' });
+        } else if (idx < currentLevelIndex) {
+          el.classList.add('passed');
+        }
+      });
+    }
+
+    function loadQuestion(index) {
+      currentLevelIndex = index;
+      selectedOptionIndex = null;
+      isSecondChanceActive = false;
+      secondChanceUsedThisTurn = false;
+      document.getElementById('secondChanceBanner').classList.add('hidden');
+
+      const q = QUESTIONS[index];
+
+      document.getElementById('levelCategory').innerText = `Рівень ${q.level} з ${QUESTIONS.length} • ${q.category}`;
+      const currentPrize = index > 0 ? QUESTIONS[index - 1].prizeFormatted : "0 ⭐";
+      document.getElementById('currentPrizeHeader').innerText = `Накопичено: ${currentPrize}`;
+      
+      document.getElementById('hostSpeech').innerText = `Запитання на ${q.prizeFormatted}. Оберіть правильну відповідь!`;
+      document.getElementById('questionText').innerHTML = q.question;
+
+      for (let i = 0; i < 4; i++) {
+        const btn = document.getElementById(`opt-${i}`);
+        const textSpan = document.getElementById(`opt-text-${i}`);
+        btn.className = 'btn-option rounded-2xl p-4 text-left flex items-center gap-4 text-slate-100 font-medium text-sm md:text-base transition-all';
+        btn.disabled = false;
+        textSpan.innerHTML = q.options[i];
+      }
+
+      updateLadderUI();
+      resetTimer();
+      startTimer();
+    }
+
+    function startTimer() {
+      clearInterval(timerInterval);
+      timeLeft = 30;
+      updateTimerUI();
+
+      timerInterval = setInterval(() => {
+        timeLeft--;
+        updateTimerUI();
+        if (timeLeft <= 0) {
+          clearInterval(timerInterval);
+          handleTimeOut();
+        }
+      }, 1000);
+    }
+
+    function resetTimer() {
+      clearInterval(timerInterval);
+      timeLeft = 30;
+      updateTimerUI();
+    }
+
+    function updateTimerUI() {
+      const text = document.getElementById('timerText');
+      const progress = document.getElementById('timerProgress');
+      text.innerText = timeLeft;
+      
+      const offset = 100 - (timeLeft / 30) * 100;
+      progress.style.strokeDashoffset = offset;
+
+      if (timeLeft <= 5) {
+        progress.setAttribute('class', 'text-red-500');
+        text.setAttribute('class', 'absolute font-black text-sm text-red-400 animate-ping');
+        playTone(400, 'square', 0.1, 0.05);
+      } else {
+        progress.setAttribute('class', 'text-amber-400');
+        text.setAttribute('class', 'absolute font-black text-sm text-amber-300');
+      }
+    }
+
+    function handleTimeOut() {
+      playSound('wrong');
+      showEndGameModal(false, "Час вичерпано!", "На жаль, 30 секунд закінчилися.");
+    }
+
+    function selectOption(index) {
+      clearInterval(timerInterval);
+      selectedOptionIndex = index;
+
+      // Disable all option buttons to prevent multiple clicks
+      for (let i = 0; i < 4; i++) {
+        document.getElementById(`opt-${i}`).disabled = true;
+      }
+
+      const q = QUESTIONS[currentLevelIndex];
+      const isCorrect = (selectedOptionIndex === q.correct);
+      const selectedBtn = document.getElementById(`opt-${selectedOptionIndex}`);
+
+      if (isCorrect) {
+        playSound('correct');
+        selectedBtn.classList.add('correct');
+        document.getElementById('hostSpeech').innerText = "Чудово! Це абсолютно правильна відповідь!";
+        
+        setTimeout(() => {
+          showExplanationModal(true, q.explanation);
+        }, 800);
+
+      } else {
+        playSound('wrong');
+        selectedBtn.classList.add('wrong');
+
+        if (isSecondChanceActive && !secondChanceUsedThisTurn) {
+          secondChanceUsedThisTurn = true;
+          isSecondChanceActive = false;
+          document.getElementById('secondChanceBanner').classList.add('hidden');
+          
+          document.getElementById('hostSpeech').innerText = "Перша відповідь була помилковою! Завдяки захисту 'Другий шанс' спробуйте ще раз!";
+          
+          // Re-enable remaining options except the wrong one
+          setTimeout(() => {
+            for (let i = 0; i < 4; i++) {
+              if (i !== selectedOptionIndex && !document.getElementById(`opt-${i}`).classList.contains('opacity-20')) {
+                document.getElementById(`opt-${i}`).disabled = false;
+              }
+            }
+            startTimer();
+          }, 800);
+          return;
+        }
+
+        document.getElementById(`opt-${q.correct}`).classList.add('correct');
+        document.getElementById('hostSpeech').innerText = "На жаль, відповідь невірна...";
+        
+        setTimeout(() => {
+          showExplanationModal(false, q.explanation);
+        }, 1200);
+      }
+    }
+
+    /* LIFELINES */
+    function use5050() {
+      if (!lifelines.fiftyFifty) return;
+      lifelines.fiftyFifty = false;
+      playSound('lifeline');
+      document.getElementById('lifeline5050').disabled = true;
+
+      const q = QUESTIONS[currentLevelIndex];
+      let wrongIndexes = [0, 1, 2, 3].filter(idx => idx !== q.correct);
+      wrongIndexes.sort(() => Math.random() - 0.5);
+      
+      wrongIndexes.slice(0, 2).forEach(idx => {
+        const btn = document.getElementById(`opt-${idx}`);
+        btn.disabled = true;
+        btn.classList.add('opacity-20');
+      });
+
+      document.getElementById('hostSpeech').innerText = "Підказка 50:50 прибрала два хибних варіанти!";
+    }
+
+    function useClue() {
+      if (!lifelines.clue) return;
+      lifelines.clue = false;
+      playSound('lifeline');
+      document.getElementById('lifelineClue').disabled = true;
+
+      const q = QUESTIONS[currentLevelIndex];
+      document.getElementById('hostSpeech').innerText = `💡 Підказка: ${q.hint}`;
+    }
+
+    function useSecondChance() {
+      if (!lifelines.secondChance) return;
+      lifelines.secondChance = false;
+      playSound('lifeline');
+      document.getElementById('lifelineSecondChance').disabled = true;
+
+      isSecondChanceActive = true;
+      document.getElementById('secondChanceBanner').classList.remove('hidden');
+      document.getElementById('hostSpeech').innerText = "Захист 'Другий шанс' активовано!";
+    }
+
+    function confirmWalkAway() {
+      clearInterval(timerInterval);
+      const wonPrize = currentLevelIndex > 0 ? QUESTIONS[currentLevelIndex - 1].prizeFormatted : "0 ⭐";
+      showEndGameModal(true, "Ви забрали зірки!", `Ваш фінальний здобуток становить ${wonPrize}!`);
+    }
+
+    /* MODALS */
+    function showExplanationModal(isCorrect, explanationText) {
+      const modal = document.getElementById('modalExplanation');
+      const headerBg = document.getElementById('modalHeaderBg');
+      const icon = document.getElementById('modalIcon');
+      const title = document.getElementById('modalTitle');
+      const body = document.getElementById('modalBody');
+      const btn = document.getElementById('modalActionBtn');
+
+      body.innerHTML = explanationText;
+
+      if (isCorrect) {
+        headerBg.className = 'h-2 w-full absolute top-0 left-0 bg-emerald-500';
+        icon.innerText = '🎉';
+        title.innerText = 'Правильна відповідь!';
+        title.className = 'text-xl font-extrabold text-emerald-400';
+        btn.innerText = (currentLevelIndex === QUESTIONS.length - 1) ? 'Отримати Супер-Зірку 🏆' : 'Наступне запитання ➡️';
+        btn.onclick = () => {
+          modal.classList.add('hidden');
+          if (currentLevelIndex < QUESTIONS.length - 1) {
+            loadQuestion(currentLevelIndex + 1);
+          } else {
+            playSound('win');
+            showEndGameModal(true, "СУПЕР ПЕРЕМОГА!", "Ви успішно відповіли на всі 12 запитань і здобули 100 ⭐!");
+          }
+        };
+      } else {
+        headerBg.className = 'h-2 w-full absolute top-0 left-0 bg-red-500';
+        icon.innerText = '❌';
+        title.innerText = 'Невірно!';
+        title.className = 'text-xl font-extrabold text-red-400';
+        btn.innerText = 'Завершити гру';
+        btn.onclick = () => {
+          modal.classList.add('hidden');
+          let safePrize = "0 ⭐";
+          for (let i = currentLevelIndex - 1; i >= 0; i--) {
+            if (QUESTIONS[i].isSafe) {
+              safePrize = QUESTIONS[i].prizeFormatted;
+              break;
+            }
+          }
+          showEndGameModal(false, "Гра закінчена", `Ваш гарантований несгораючий здобуток: ${safePrize}`);
+        };
+      }
+
+      modal.classList.remove('hidden');
+    }
+
+    function closeExplanationModal() {
+      document.getElementById('modalExplanation').classList.add('hidden');
+    }
+
+    function showEndGameModal(isWin, titleText, subtitleText) {
+      clearInterval(timerInterval);
+      const modal = document.getElementById('modalEndGame');
+      document.getElementById('endIcon').innerText = isWin ? '🏆' : '⭐';
+      document.getElementById('endTitle').innerText = titleText;
+      document.getElementById('endSubtitle').innerText = subtitleText;
+
+      let finalPrize = "0 ⭐";
+      if (isWin) {
+        finalPrize = currentLevelIndex > 0 ? QUESTIONS[currentLevelIndex].prizeFormatted : "0 ⭐";
+      } else {
+        for (let i = currentLevelIndex - 1; i >= 0; i--) {
+          if (QUESTIONS[i].isSafe) {
+            finalPrize = QUESTIONS[i].prizeFormatted;
+            break;
+          }
+        }
+      }
+      document.getElementById('endPrizeAmount').innerText = finalPrize;
+      modal.classList.remove('hidden');
+    }
+
+    function restartGame() {
+      lifelines = { fiftyFifty: true, clue: true, secondChance: true };
+      document.getElementById('lifeline5050').disabled = false;
+      document.getElementById('lifelineClue').disabled = false;
+      document.getElementById('lifelineSecondChance').disabled = false;
+
+      document.getElementById('modalEndGame').classList.add('hidden');
+      document.getElementById('modalExplanation').classList.add('hidden');
+      document.getElementById('gameScreen').classList.add('hidden');
+      document.getElementById('btnWalkAway').classList.add('hidden');
+      document.getElementById('startScreen').classList.remove('hidden');
+    }
+  </script>
+</body>
+</html>
